@@ -9,7 +9,7 @@ import (
 
 const (
 	csvZipFile = "/tmp/eurofxref.zip"
-	csvFile    = "/tmp/eurofxref.csv"
+	CsvFile    = "/tmp/eurofxref.csv"
 )
 
 // DownloadCsv the CSV file and save it to /tmp
@@ -45,6 +45,6 @@ func deleteCurrencyFiles() error {
 		return err
 	}
 
-	err = os.Remove(csvFile)
+	err = os.Remove(CsvFile)
 	return err
 }

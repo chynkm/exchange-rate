@@ -1,4 +1,4 @@
-module github.com/chynkm/exchange-rate
+module github.com/chynkm/ratesdb
 
 go 1.15
 

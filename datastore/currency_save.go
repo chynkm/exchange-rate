@@ -5,24 +5,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/chynkm/exchange-rate/currencystore"
+	"github.com/chynkm/ratesdb/currencystore"
 )
 
 const currencyCsvUrl = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref.zip"
 
 var currencies map[string]int
 
-// SaveCurrencyRates saves rates to the DB
+// SaveCurrencyRates saves rates to the Db
 func SaveCurrencyRates() error {
 	getCurrencies()
-
 	currencystore.DownloadCsv(currencyCsvUrl)
 	currencyRates := currencystore.OpenAndReadFile(currencystore.CsvFile)
-
-	currencyCodes := currencyRates[0][1 : len(currencyRates[0])-1]
-	date, rates := currencyRates[1][0], currencyRates[1][1:len(currencyRates[0])-1]
-
-	date = getDateFromString(date)
+	date, currencyCodes, rates := getCurrencyRateFromCsv(currencyRates)
 
 	sqlStr := "INSERT INTO currency_rates(base_currency_id, converted_currency_id, rate, date) VALUES"
 	values := []interface{}{}
@@ -34,11 +29,19 @@ func SaveCurrencyRates() error {
 	}
 
 	sqlStr = sqlStr[0 : len(sqlStr)-1]
-	stmt, _ := db.Prepare(sqlStr)
+	stmt, _ := Db.Prepare(sqlStr)
 
 	_, err := stmt.Exec(values...)
 
 	return err
+}
+
+func getCurrencyRateFromCsv(currencyRates [][]string) (string, []string, []string) {
+	currencyCodes := currencyRates[0][1 : len(currencyRates[0])-1]
+	date, rates := currencyRates[1][0], currencyRates[1][1:len(currencyRates[0])-1]
+
+	date = getDateFromString(date)
+	return date, currencyCodes, rates
 }
 
 func getDateFromString(dt string) string {
@@ -54,7 +57,7 @@ func getCurrencies() {
 	currencies = make(map[string]int)
 	q := `SELECT id, code FROM currencies`
 
-	rows, err := db.Query(q)
+	rows, err := Db.Query(q)
 
 	if err != nil {
 		log.Fatal(err)

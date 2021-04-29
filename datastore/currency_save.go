@@ -1,8 +1,9 @@
 package datastore
 
 import (
-	"fmt"
 	"log"
+	"strings"
+	"time"
 
 	"github.com/chynkm/exchange-rate/currencystore"
 )
@@ -12,18 +13,41 @@ const currencyCsvUrl = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref.zip"
 var currencies map[string]int
 
 // SaveCurrencyRates saves rates to the DB
-func SaveCurrencyRates() {
+func SaveCurrencyRates() error {
+	getCurrencies()
+
 	currencystore.DownloadCsv(currencyCsvUrl)
 	currencyRates := currencystore.OpenAndReadFile(currencystore.CsvFile)
 
 	currencyCodes := currencyRates[0][1 : len(currencyRates[0])-1]
 	date, rates := currencyRates[1][0], currencyRates[1][1:len(currencyRates[0])-1]
 
-	fmt.Println(date)
+	date = getDateFromString(date)
 
-	for i, currency := range currencyCodes {
-		fmt.Println(currency + " => " + rates[i])
+	sqlStr := "INSERT INTO currency_rates(base_currency_id, converted_currency_id, rate, date) VALUES"
+	values := []interface{}{}
+
+	for i, currencyCode := range currencyCodes {
+		sqlStr += "(?, ?, ?, ?),"
+		currencyCode = strings.TrimSpace(currencyCode)
+		values = append(values, currencies["EUR"], currencies[currencyCode], rates[i], date)
 	}
+
+	sqlStr = sqlStr[0 : len(sqlStr)-1]
+	stmt, _ := db.Prepare(sqlStr)
+
+	_, err := stmt.Exec(values...)
+
+	return err
+}
+
+func getDateFromString(dt string) string {
+	newdate, err := time.Parse("02 January 2006", dt)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return newdate.Format("2006-01-02")
 }
 
 func getCurrencies() {

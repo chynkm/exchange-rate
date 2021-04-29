@@ -1,7 +1,14 @@
 package main
 
-import "github.com/chynkm/exchange-rate/datastore"
+import (
+	"log"
+
+	"github.com/chynkm/exchange-rate/datastore"
+)
 
 func main() {
-	datastore.SaveCurrencyRates()
+	err := datastore.SaveCurrencyRates()
+	if err != nil {
+		log.Fatal(err)
+	}
 }

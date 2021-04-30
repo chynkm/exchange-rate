@@ -4,3 +4,8 @@ database:
   name: "homestead"
   username: "homestead"
   password: "secret"
+
+redis:
+  address: "127.0.0.1:6379"
+  database: 1
+  password: "secret"

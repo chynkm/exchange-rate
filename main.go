@@ -6,6 +6,8 @@ import (
 	"os"
 
 	"github.com/chynkm/ratesdb/datastore"
+	"github.com/chynkm/ratesdb/redisdb"
+	"github.com/gomodule/redigo/redis"
 	"gopkg.in/yaml.v2"
 )
 
@@ -22,6 +24,12 @@ type Config struct {
 		Username string `yaml:"username"`
 		Password string `yaml:"password"`
 	} `yaml:"database"`
+
+	Redis struct {
+		Address  string `yaml:"address"`
+		Password string `yaml:"password"`
+		Database int    `yaml:"database"`
+	} `yaml:"redis"`
 }
 
 func init() {
@@ -34,6 +42,26 @@ func init() {
 
 	if err != nil {
 		panic(err.Error())
+	}
+
+	redisdb.Rdbpool = &redis.Pool{
+		Dial: func() (redis.Conn, error) {
+			c, err := redis.Dial("tcp", cfg.Redis.Address)
+			if err != nil {
+				return nil, err
+			}
+			if cfg.Redis.Password != "" {
+				if _, err := c.Do("AUTH", cfg.Redis.Password); err != nil {
+					c.Close()
+					return nil, err
+				}
+			}
+			if _, err := c.Do("SELECT", cfg.Redis.Database); err != nil {
+				c.Close()
+				return nil, err
+			}
+			return c, nil
+		},
 	}
 }
 

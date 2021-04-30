@@ -2,6 +2,7 @@ package datastore
 
 import (
 	"log"
+	"strconv"
 	"strings"
 	"time"
 
@@ -19,13 +20,25 @@ func SaveCurrencyRates() error {
 	currencyRates := currencystore.OpenAndReadFile(currencystore.CsvFile)
 	date, currencyCodes, rates := getCurrencyRateFromCsv(currencyRates)
 
-	sqlStr := "INSERT INTO currency_rates(base_currency_id, converted_currency_id, rate, date) VALUES"
-	values := []interface{}{}
+	exchangeRates := map[string]string{"EUR": "1"}
 
 	for i, currencyCode := range currencyCodes {
-		sqlStr += "(?, ?, ?, ?),"
 		currencyCode = strings.TrimSpace(currencyCode)
-		values = append(values, currencies["EUR"], currencies[currencyCode], rates[i], date)
+		exchangeRates[currencyCode] = strings.TrimSpace(rates[i])
+	}
+
+	values := []interface{}{}
+	sqlStr := "INSERT INTO currency_rates(base_currency_id, converted_currency_id, rate, date) VALUES"
+
+	for dbCurrencyCode, _ := range currencies {
+		for currencyCode, rate := range exchangeRates {
+			sqlStr += "(?, ?, ?, ?),"
+			frate, _ := strconv.ParseFloat(rate, 32)
+			fcurrencyRate, _ := strconv.ParseFloat(exchangeRates[dbCurrencyCode], 32)
+
+			currencyCode = strings.TrimSpace(currencyCode)
+			values = append(values, currencies[dbCurrencyCode], currencies[currencyCode], frate/fcurrencyRate, date)
+		}
 	}
 
 	sqlStr = sqlStr[0 : len(sqlStr)-1]

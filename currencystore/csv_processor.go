@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/chynkm/ratesdb/datastore"
 )
 
 // FetchExchangeRates download the latest file from central bank of Europe,
@@ -42,4 +44,48 @@ func getDateFromString(dt string) string {
 	}
 
 	return newdate.Format("2006-01-02")
+}
+
+func GetBulkExchangeRateFromCsv() {
+	currencyRates := openAndReadFile("/tmp/eurofxref-hist.csv")
+	currencyCodes := currencyRates[0][1:]
+	currencies := datastore.GetCurrencies()
+
+	for i := 1; i < len(currencyRates); i++ {
+		date, rates := currencyRates[i][0], currencyRates[i][1:]
+
+		exchangeRates := map[string]float64{"EUR": 1}
+		var err error
+
+		for i, currencyCode := range currencyCodes {
+			currencyCode = strings.TrimSpace(currencyCode)
+			if strings.TrimSpace(rates[i]) == "" {
+				exchangeRates[currencyCode] = 0
+			} else {
+				exchangeRates[currencyCode], err = strconv.ParseFloat(strings.TrimSpace(rates[i]), 64)
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+		}
+
+		values := []interface{}{}
+		sqlStr := "INSERT INTO exchange_rates(base_currency_id, converted_currency_id, rate, date) VALUES"
+
+		for currencyCode, rate := range exchangeRates {
+			sqlStr += "(?, ?, ?, ?),"
+			values = append(
+				values,
+				currencies["EUR"],
+				currencies[currencyCode],
+				rate,
+				date,
+			)
+		}
+
+		sqlStr = sqlStr[0 : len(sqlStr)-1]
+		stmt, _ := datastore.Db.Prepare(sqlStr)
+
+		stmt.Exec(values...)
+	}
 }

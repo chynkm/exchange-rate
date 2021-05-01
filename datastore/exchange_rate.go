@@ -92,20 +92,3 @@ WHERE date < ? ORDER BY date DESC LIMIT 1`
 
 	return date
 }
-
-// GetOldestExchangeRateDate retrieves the oldest date which has
-// an exchange rate data from the DB limited to the number of days
-func GetOldestExchangeRateDate(days int) string {
-	q := `SELECT MIN(date) date FROM (SELECT date FROM exchange_rates
-WHERE converted_currency_id = ? LIMIT ?) temp_table`
-
-	var date string
-	row := Db.QueryRow(q, euroId, days)
-	err := row.Scan(&date)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return date
-}

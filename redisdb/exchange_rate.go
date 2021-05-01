@@ -1,10 +1,8 @@
 package redisdb
 
 import (
-	"fmt"
 	"log"
 	"math"
-	"os"
 	"time"
 
 	"github.com/chynkm/ratesdb/currencystore"
@@ -20,21 +18,12 @@ func SaveExchangeRates() {
 
 	dbCurrencies := datastore.GetCurrencies()
 
-	sDate := datastore.GetOldestExchangeRateDate(days)
-	startdate, err := time.Parse("2006-01-02", sDate)
-	endDate := time.Now()
-	if err != nil {
-		log.Fatal(err)
-	}
-	dates := generateDates(startdate, endDate)
-	fmt.Println(dates)
-	os.Exit(1)
-
-	for i := 0; i < len(dates); i++ {
-		exchangeRates := datastore.GetExchangeRates(dates[i])
+	for i := days; i >= 0; i-- {
+		date := time.Now().AddDate(0, 0, -i).Format(currencystore.DateLayout)
+		exchangeRates := datastore.GetExchangeRates(date)
 
 		dailyExchangeRates := createExchangeRateHash(
-			dates[i],
+			date,
 			dbCurrencies,
 			exchangeRates,
 		)
@@ -90,17 +79,4 @@ func getExchangeRate(
 	}
 
 	return baseCurrencyExchangeRate
-}
-
-// generateDates from the start date to the end date.
-// It includes the start date so that corresponding DB value is present
-func generateDates(startDate time.Time, endDate time.Time) []string {
-	dates := []string{}
-	i := 0
-	for startDate.AddDate(0, 0, i).Format(currencystore.DateLayout) <= endDate.Format(currencystore.DateLayout) {
-		dates = append(dates, startDate.AddDate(0, 0, i).Format(currencystore.DateLayout))
-		i++
-	}
-
-	return dates
 }

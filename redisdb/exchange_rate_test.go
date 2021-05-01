@@ -1,8 +1,10 @@
 package redisdb
 
 import (
+	"log"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestExchangeRateFormat(t *testing.T) {
@@ -83,5 +85,41 @@ func TestGetExchangeRate(t *testing.T) {
 		if !reflect.DeepEqual(got, entry.out) {
 			t.Error("exchange rate calculation error")
 		}
+	}
+}
+
+func TestGenerateDates(t *testing.T) {
+	date, err := time.Parse("2006-01-02", "2021-04-25")
+	if err != nil {
+		log.Fatal(err)
+	}
+	endDate, err := time.Parse("2006-01-02", "2021-04-27")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	got := generateDates(date, endDate)
+	want := []string{
+		"2021-04-25",
+		"2021-04-26",
+		"2021-04-27",
+	}
+
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("got %s, want %s", got, want)
+	}
+
+	endDate, err = time.Parse("2006-01-02", "2021-04-28")
+	if err != nil {
+		log.Fatal(err)
+	}
+	got = generateDates(date, endDate)
+	want = []string{
+		"2021-04-26",
+		"2021-04-25",
+	}
+
+	if reflect.DeepEqual(got, want) {
+		t.Errorf("got %s, want %s", got, want)
 	}
 }

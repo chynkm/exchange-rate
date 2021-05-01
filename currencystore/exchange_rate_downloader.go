@@ -9,7 +9,6 @@ import (
 
 // downloadCsv the CSV file and save it to /tmp
 func downloadCsv(url string) error {
-	return nil
 	deleteCurrencyFiles()
 
 	resp, err := http.Get(url)

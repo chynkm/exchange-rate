@@ -7,3 +7,5 @@ import (
 )
 
 var Db *sql.DB
+
+const euroId = 1

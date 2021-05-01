@@ -1,32 +1,40 @@
 package redisdb
 
 import (
+	"fmt"
 	"log"
 	"math"
+	"os"
 	"time"
 
 	"github.com/chynkm/ratesdb/currencystore"
 	"github.com/chynkm/ratesdb/datastore"
 )
 
-const (
-	euro = "EUR"
-	days = 31
-)
-
 // SaveExchangeRates to Redis
+// Insert data of previous days exchange rate when a day is missing
+// Previous day is always present since we are fetching it from the DB
 func SaveExchangeRates() {
 	rdb := Rdbpool.Get()
 	defer rdb.Close()
 
 	dbCurrencies := datastore.GetCurrencies()
 
-	for i := 0; i <= days; i++ {
-		currentDate := time.Now().AddDate(0, 0, -i).Format(currencystore.DateLayout)
-		exchangeRates := datastore.GetExchangeRates(currentDate)
+	sDate := datastore.GetOldestExchangeRateDate(days)
+	startdate, err := time.Parse("2006-01-02", sDate)
+	endDate := time.Now()
+	if err != nil {
+		log.Fatal(err)
+	}
+	dates := generateDates(startdate, endDate)
+	fmt.Println(dates)
+	os.Exit(1)
+
+	for i := 0; i < len(dates); i++ {
+		exchangeRates := datastore.GetExchangeRates(dates[i])
 
 		dailyExchangeRates := createExchangeRateHash(
-			currentDate,
+			dates[i],
 			dbCurrencies,
 			exchangeRates,
 		)
@@ -38,11 +46,9 @@ func SaveExchangeRates() {
 				redisExchangeRates = append(redisExchangeRates, code, rate)
 			}
 
-			if len(redisExchangeRates) > 1 {
-				_, err := rdb.Do("HMSET", redisExchangeRates...)
-				if err != nil {
-					log.Fatal(err)
-				}
+			_, err := rdb.Do("HMSET", redisExchangeRates...)
+			if err != nil {
+				log.Fatal(err)
 			}
 		}
 	}
@@ -84,4 +90,17 @@ func getExchangeRate(
 	}
 
 	return baseCurrencyExchangeRate
+}
+
+// generateDates from the start date to the end date.
+// It includes the start date so that corresponding DB value is present
+func generateDates(startDate time.Time, endDate time.Time) []string {
+	dates := []string{}
+	i := 0
+	for startDate.AddDate(0, 0, i).Format(currencystore.DateLayout) <= endDate.Format(currencystore.DateLayout) {
+		dates = append(dates, startDate.AddDate(0, 0, i).Format(currencystore.DateLayout))
+		i++
+	}
+
+	return dates
 }

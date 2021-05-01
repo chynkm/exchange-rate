@@ -1,6 +1,8 @@
 package datastore
 
-import "log"
+import (
+	"log"
+)
 
 // SaveCurrencyRates saves exchange rates to the DB
 func SaveExchangeRates(date string, exchangeRates map[string]float64) error {
@@ -28,32 +30,14 @@ func SaveExchangeRates(date string, exchangeRates map[string]float64) error {
 	return err
 }
 
-// GetCurrencies generates a hash of currency code and its DB id value
-func GetCurrencies() map[string]int {
-	currencies := map[string]int{}
-
-	q := `SELECT id, code FROM currencies`
-	rows, err := Db.Query(q)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for rows.Next() {
-		var id int
-		var code string
-		rows.Scan(&id, &code)
-
-		currencies[code] = id
-	}
-
-	return currencies
-}
-
-// GetExchangeRates returns a hash of converted currency code
-// and their rate for a given date
+// GetExchangeRates returns a hash of converted currency code and their rate
+// for a given date. If the "date" data is missing fetch from the last
+// available date in the DB
 func GetExchangeRates(date string) map[string]float64 {
 	exchangeRates := map[string]float64{}
+	if !exchangeRateDataExists(date) {
+		date = getPreviousExchangeRateDate(date)
+	}
 
 	q := `SELECT code converted_code, rate FROM exchange_rates er
 JOIN currencies c ON c.id = converted_currency_id
@@ -64,6 +48,7 @@ WHERE date = ?`
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var code string
@@ -74,4 +59,53 @@ WHERE date = ?`
 	}
 
 	return exchangeRates
+}
+
+// exchangeRateDataExists Check if exchange rate data exists or not
+// for a particular date
+func exchangeRateDataExists(date string) bool {
+	var count int
+	q := `SELECT COUNT(id) FROM exchange_rates WHERE date = ?`
+
+	err := Db.QueryRow(q, date).Scan(&count)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if count == 0 {
+		return false
+	}
+
+	return true
+}
+
+// getPreviousExchangeRateDate returns the previous date containing the
+// exchange rate data in the DB
+func getPreviousExchangeRateDate(date string) string {
+	q := `SELECT date FROM exchange_rates
+WHERE date < ? ORDER BY date DESC LIMIT 1`
+
+	err := Db.QueryRow(q, date).Scan(&date)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return date
+}
+
+// GetOldestExchangeRateDate retrieves the oldest date which has
+// an exchange rate data from the DB limited to the number of days
+func GetOldestExchangeRateDate(days int) string {
+	q := `SELECT MIN(date) date FROM (SELECT date FROM exchange_rates
+WHERE converted_currency_id = ? LIMIT ?) temp_table`
+
+	var date string
+	row := Db.QueryRow(q, euroId, days)
+	err := row.Scan(&date)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return date
 }

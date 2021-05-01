@@ -41,5 +41,5 @@ func getDateFromString(dt string) string {
 		log.Fatal(err)
 	}
 
-	return newdate.Format("2006-01-02")
+	return newdate.Format(DateLayout)
 }

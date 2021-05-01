@@ -57,7 +57,7 @@ func GetExchangeRates(date string) map[string]float64 {
 
 	q := `SELECT code converted_code, rate FROM exchange_rates er
 JOIN currencies c ON c.id = converted_currency_id
-WHERE date = %s`
+WHERE date = ?`
 
 	rows, err := Db.Query(q, date)
 

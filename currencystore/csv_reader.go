@@ -18,7 +18,7 @@ func readCsvFile(reader io.Reader) ([][]string, error) {
 	return lines, err
 }
 
-func OpenAndReadFile(fileName string) [][]string {
+func openAndReadFile(fileName string) [][]string {
 	file, err := os.Open(fileName)
 	if err != nil {
 		fmt.Printf("Failed to open file: %s", fileName)

@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/chynkm/ratesdb/currencystore"
 	"github.com/chynkm/ratesdb/datastore"
 	"github.com/chynkm/ratesdb/redisdb"
 	"github.com/gomodule/redigo/redis"
@@ -66,7 +67,8 @@ func init() {
 }
 
 func main() {
-	err := datastore.SaveCurrencyRates()
+	date, exchangeRates := currencystore.FetchExchangeRates()
+	err := datastore.SaveExchangeRates(date, exchangeRates)
 	if err != nil {
 		log.Fatal(err)
 	}

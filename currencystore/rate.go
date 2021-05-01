@@ -7,13 +7,8 @@ import (
 	"os/exec"
 )
 
-const (
-	csvZipFile = "/tmp/eurofxref.zip"
-	CsvFile    = "/tmp/eurofxref.csv"
-)
-
-// DownloadCsv the CSV file and save it to /tmp
-func DownloadCsv(url string) error {
+// downloadCsv the CSV file and save it to /tmp
+func downloadCsv(url string) error {
 	deleteCurrencyFiles()
 
 	resp, err := http.Get(url)
@@ -45,6 +40,6 @@ func deleteCurrencyFiles() error {
 		return err
 	}
 
-	err = os.Remove(CsvFile)
+	err = os.Remove(csvFile)
 	return err
 }

@@ -6,7 +6,7 @@ import (
 
 func TestDownloadCsv(t *testing.T) {
 	url := ""
-	err := DownloadCsv(url)
+	err := downloadCsv(url)
 
 	if err == nil {
 		t.Errorf("Empty URL should create error")

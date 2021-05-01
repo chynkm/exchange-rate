@@ -30,6 +30,6 @@ func TestGetExchangeRateFromCsv(t *testing.T) {
 	}
 
 	if !reflect.DeepEqual(gotExchangeRates, wantExchangeRates) {
-		t.Errorf("got exchangerates are different from want exchangerates")
+		t.Error("got exchangerates are different from want exchangerates")
 	}
 }

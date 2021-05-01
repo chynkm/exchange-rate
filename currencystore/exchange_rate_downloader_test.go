@@ -9,6 +9,6 @@ func TestDownloadCsv(t *testing.T) {
 	err := downloadCsv(url)
 
 	if err == nil {
-		t.Errorf("Empty URL should create error")
+		t.Error("Empty URL should create error")
 	}
 }

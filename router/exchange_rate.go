@@ -2,7 +2,6 @@ package router
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -25,19 +24,10 @@ var (
 		"unsupported_to":   "The 'to' currency is unsupported",
 		"invalid_date":     "The 'date' value is invalid",
 		"oldest_date":      "Only last " + strconv.Itoa(redisdb.Days) + " days exchange rates are supported",
-		"future_date":      "Future days exchange rates are unavailable",
+		"future_date":      "Future date exchange rates are unavailable",
 	}
 	currencies map[string]int
 )
-
-type ExchangeRate struct {
-	rate float64
-}
-
-type ApiValidationError struct {
-	status  int
-	message string
-}
 
 type validationError struct {
 	err     bool
@@ -45,7 +35,24 @@ type validationError struct {
 }
 
 func getExchangeRate(w http.ResponseWriter, req *http.Request) {
-	fmt.Println(req.URL.Query())
+	v := validateGetExchangeRate(currencies, req.URL.Query())
+
+	if !v.err {
+		e := map[string][]map[string]interface{}{
+			"errors": {
+				{
+					"status":  http.StatusUnprocessableEntity,
+					"message": v.message,
+				},
+			},
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		json.NewEncoder(w).Encode(e)
+		return
+	}
+
 	json.NewEncoder(w).Encode(map[string]int{"status": 200})
 }
 

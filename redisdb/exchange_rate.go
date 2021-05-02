@@ -18,7 +18,7 @@ func SaveExchangeRates() {
 
 	dbCurrencies := datastore.GetCurrencies()
 
-	for i := days; i >= 0; i-- {
+	for i := Days; i >= 0; i-- {
 		date := time.Now().AddDate(0, 0, -i).Format(currencystore.DateLayout)
 		exchangeRates := datastore.GetExchangeRates(date)
 

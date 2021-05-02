@@ -78,9 +78,9 @@ func TestGetExchangeRate(t *testing.T) {
 		},
 	}
 
-	for _, entry := range exchangeRateTable {
-		got := getExchangeRate(entry.in, exchangeRates)
-		if !reflect.DeepEqual(got, entry.out) {
+	for _, row := range exchangeRateTable {
+		got := getExchangeRate(row.in, exchangeRates)
+		if !reflect.DeepEqual(got, row.out) {
 			t.Error("exchange rate calculation error")
 		}
 	}

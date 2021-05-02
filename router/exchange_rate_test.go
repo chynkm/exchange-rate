@@ -1,21 +1,101 @@
 package router
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+	"time"
 
-func TestFromQueryValidation(t *testing.T) {
+	"github.com/chynkm/ratesdb/currencystore"
+	"github.com/chynkm/ratesdb/redisdb"
+)
+
+func TestGetExchangeRateQueryValidation(t *testing.T) {
 	currencies := map[string]int{
 		"EUR": 1,
 		"USD": 2,
 		"JPY": 3,
 	}
 
-	q := map[string][]string{
-		"from": {"EUR"},
-		"to":   {"USD"},
+	time := time.Now()
+	oldDate := time.AddDate(0, 0, -(redisdb.Days + 1)).Format(currencystore.DateLayout)
+	futureDate := time.AddDate(0, 0, 1).Format(currencystore.DateLayout)
+	validDate1 := time.Format(currencystore.DateLayout)
+	validDate2 := time.AddDate(0, 0, -redisdb.Days).Format(currencystore.DateLayout)
+
+	var exchangeRateTable = []struct {
+		in  map[string][]string
+		out *validationError
+	}{
+		{
+			map[string][]string{},
+			&validationError{false, exchangeRateErr["from_missing"]},
+		},
+		{
+			map[string][]string{"to": {"USD"}},
+			&validationError{false, exchangeRateErr["from_missing"]},
+		},
+		{
+			map[string][]string{"from": {"EUR"}},
+			&validationError{false, exchangeRateErr["to_missing"]},
+		},
+		{
+			map[string][]string{"from": {"EUR", "INR"}, "to": {"USD"}},
+			&validationError{false, exchangeRateErr["only_one_from"]},
+		},
+		{
+			map[string][]string{"from": {"EUR"}, "to": {"USD", "INR"}},
+			&validationError{false, exchangeRateErr["only_one_to"]},
+		},
+		{
+			map[string][]string{"from": {"INR"}, "to": {"USD"}},
+			&validationError{false, exchangeRateErr["unsupported_from"]},
+		},
+		{
+			map[string][]string{"from": {"EUR"}, "to": {"INR"}},
+			&validationError{false, exchangeRateErr["unsupported_to"]},
+		},
+		{
+			map[string][]string{"from": {"EUR"}, "to": {"INR"}, "date": {}},
+			&validationError{false, exchangeRateErr["date_missing"]},
+		},
+		{
+			map[string][]string{"from": {"EUR"}, "to": {"INR"}, "date": {"a", "b"}},
+			&validationError{false, exchangeRateErr["only_one_date"]},
+		},
+		{
+			map[string][]string{"from": {"EUR"}, "to": {"INR"}, "date": {"a"}},
+			&validationError{false, exchangeRateErr["invalid_date"]},
+		},
+		{
+			map[string][]string{"from": {"EUR"}, "to": {"INR"}, "date": {"25-04-2021"}},
+			&validationError{false, exchangeRateErr["invalid_date"]},
+		},
+		{
+			map[string][]string{"from": {"EUR"}, "to": {"INR"}, "date": {oldDate}},
+			&validationError{false, exchangeRateErr["oldest_date"]},
+		},
+		{
+			map[string][]string{"from": {"EUR"}, "to": {"INR"}, "date": {futureDate}},
+			&validationError{false, exchangeRateErr["future_date"]},
+		},
+		{
+			map[string][]string{"from": {"EUR"}, "to": {"USD"}},
+			&validationError{true, ""},
+		},
+		{
+			map[string][]string{"from": {"EUR"}, "to": {"USD"}, "date": {validDate1}},
+			&validationError{true, ""},
+		},
+		{
+			map[string][]string{"from": {"EUR"}, "to": {"USD"}, "date": {validDate2}},
+			&validationError{true, ""},
+		},
 	}
 
-	got, _ := validateGetExchangeRate(currencies, q)
-	if !got {
-		t.Errorf("query string validation failed")
+	for _, row := range exchangeRateTable {
+		got := validateGetExchangeRate(currencies, row.in)
+		if !reflect.DeepEqual(got, row.out) {
+			t.Error("validation error: " + row.out.message)
+		}
 	}
 }

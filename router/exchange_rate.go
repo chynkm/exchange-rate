@@ -30,15 +30,6 @@ var (
 	currencies map[string]int
 )
 
-type ExchangeRate struct {
-	rate float64
-}
-
-type ApiValidationError struct {
-	status  int
-	message string
-}
-
 type validationError struct {
 	err     bool
 	message string
@@ -46,6 +37,22 @@ type validationError struct {
 
 func getExchangeRate(w http.ResponseWriter, req *http.Request) {
 	fmt.Println(req.URL.Query())
+	v := validateGetExchangeRate(currencies, req.URL.Query())
+	if !v.err {
+		a := []map[string]interface{}{
+			{
+				"status":  422,
+				"message": v.message,
+			},
+		}
+		b := map[string][]map[string]interface{}{
+			"errors": a,
+		}
+
+		json.NewEncoder(w).Encode(b)
+		return
+	}
+
 	json.NewEncoder(w).Encode(map[string]int{"status": 200})
 }
 

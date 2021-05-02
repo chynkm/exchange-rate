@@ -99,3 +99,32 @@ func TestGetExchangeRateQueryValidation(t *testing.T) {
 		}
 	}
 }
+
+func TestExtractGetExchangeRateQueryParams(t *testing.T) {
+	var queryParamsTable = []struct {
+		in  map[string][]string
+		out map[string]string
+	}{
+		{
+			map[string][]string{"from": {"EUR"}, "to": {"USD"}, "date": {"2021-04-25"}},
+			map[string]string{"from": "EUR", "to": "USD", "date": "2021-04-25"},
+		},
+		{
+			map[string][]string{"from": {"EUR"}, "to": {"USD"}},
+			map[string]string{"from": "EUR", "to": "USD", "date": redisdb.LatestDate},
+		},
+	}
+
+	for _, row := range queryParamsTable {
+		date, from, to := extractGetExchangeRateQueryParams(row.in)
+		if date != row.out["date"] {
+			t.Error("date error")
+		}
+		if from != row.out["from"] {
+			t.Error("from error")
+		}
+		if to != row.out["to"] {
+			t.Error("to error")
+		}
+	}
+}

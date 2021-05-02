@@ -7,6 +7,7 @@ import (
 
 	"github.com/chynkm/ratesdb/currencystore"
 	"github.com/chynkm/ratesdb/datastore"
+	"github.com/gomodule/redigo/redis"
 )
 
 // SaveExchangeRates to Redis
@@ -20,6 +21,9 @@ func SaveExchangeRates() {
 
 	for i := Days; i >= 0; i-- {
 		date := time.Now().AddDate(0, 0, -i).Format(currencystore.DateLayout)
+		if i == 0 {
+			LatestDate = date
+		}
 		exchangeRates := datastore.GetExchangeRates(date)
 
 		dailyExchangeRates := createExchangeRateHash(
@@ -53,7 +57,7 @@ func createExchangeRateHash(
 	exchangeRateHash := map[string]map[string]float64{}
 
 	for currencyCode, _ := range currencies {
-		exchangeRateHash[date+":"+currencyCode] = getExchangeRate(
+		exchangeRateHash[date+":"+currencyCode] = calculateExchangeRate(
 			currencyCode,
 			exchangeRates,
 		)
@@ -62,8 +66,8 @@ func createExchangeRateHash(
 	return exchangeRateHash
 }
 
-// getExchangeRate for a base currency
-func getExchangeRate(
+// calculateExchangeRate for a base currency
+func calculateExchangeRate(
 	baseCurrencyCode string,
 	exchangeRates map[string]float64,
 ) map[string]float64 {
@@ -79,4 +83,18 @@ func getExchangeRate(
 	}
 
 	return baseCurrencyExchangeRate
+}
+
+// GetExchangeRate retrieves the rate for the day from Redis
+func GetExchangeRate(date, from, to string) float64 {
+	rdb := Rdbpool.Get()
+	defer rdb.Close()
+
+	rate, err := redis.Float64(rdb.Do("HGET", date+":"+from, to))
+	if err != nil {
+		log.Println("redis: unable to retrieve exchange rate for: ", date, from, to)
+		return 0
+	}
+
+	return rate
 }

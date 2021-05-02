@@ -41,7 +41,7 @@ func TestExchangeRateFormat(t *testing.T) {
 	}
 }
 
-func TestGetExchangeRate(t *testing.T) {
+func TestCalculateExchangeRate(t *testing.T) {
 	exchangeRates := map[string]float64{
 		"EUR": 1,
 		"USD": 1.2082,
@@ -79,7 +79,7 @@ func TestGetExchangeRate(t *testing.T) {
 	}
 
 	for _, row := range exchangeRateTable {
-		got := getExchangeRate(row.in, exchangeRates)
+		got := calculateExchangeRate(row.in, exchangeRates)
 		if !reflect.DeepEqual(got, row.out) {
 			t.Error("exchange rate calculation error")
 		}

@@ -53,7 +53,23 @@ func getExchangeRate(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]int{"status": 200})
+	date, from, to := extractGetExchangeRateQueryParams(req.URL.Query())
+	rate := redisdb.GetExchangeRate(date, from, to)
+	json.NewEncoder(w).Encode(map[string]interface{}{"rate": rate, "status": 200})
+}
+
+// extractGetExchangeRateQueryParams retrieves the query params.
+// returns the current date if no date is specified
+func extractGetExchangeRateQueryParams(
+	q map[string][]string,
+) (string, string, string) {
+	date := redisdb.LatestDate
+
+	if _, ok := q["date"]; ok {
+		date = q["date"][0]
+	}
+
+	return date, q["from"][0], q["to"][0]
 }
 
 // validateGetExchangeRate validate the API request

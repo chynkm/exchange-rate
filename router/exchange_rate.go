@@ -10,6 +10,7 @@ import (
 	"github.com/chynkm/ratesdb/currencystore"
 	"github.com/chynkm/ratesdb/datastore"
 	"github.com/chynkm/ratesdb/redisdb"
+	"github.com/tomasen/realip"
 )
 
 var (
@@ -35,6 +36,7 @@ type validationError struct {
 }
 
 func getExchangeRate(w http.ResponseWriter, req *http.Request) {
+	log.Println(realip.FromRequest(req))
 	v := validateGetExchangeRate(currencies, req.URL.Query())
 
 	if !v.err {

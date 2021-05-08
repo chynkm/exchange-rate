@@ -15,17 +15,19 @@ import (
 
 var (
 	exchangeRateErr = map[string]string{
-		"from_missing":     "The 'from' currency is missing in the query parameters",
-		"to_missing":       "The 'to' currency is missing in the query parameters",
-		"date_missing":     "The 'date' value is missing in the query parameters",
-		"only_one_from":    "Only one 'from' currency is supported",
-		"only_one_to":      "Only one 'to' currency is supported",
-		"only_one_date":    "Only one 'date' value is supported",
-		"unsupported_from": "The 'from' currency is unsupported",
-		"unsupported_to":   "The 'to' currency is unsupported",
-		"invalid_date":     "The 'date' value is invalid",
-		"oldest_date":      "Only last " + strconv.Itoa(redisdb.Days) + " days exchange rates are supported",
-		"future_date":      "Future date exchange rates are unavailable",
+		"from_missing":     "The 'from' currency is missing in the query parameters.",
+		"to_missing":       "The 'to' currency is missing in the query parameters.",
+		"date_missing":     "The 'date' value is missing in the query parameters.",
+		"only_one_from":    "Only one 'from' currency is supported.",
+		"only_one_to":      "Only one 'to' currency is supported.",
+		"only_one_date":    "Only one 'date' value is supported.",
+		"unsupported_from": "The 'from' currency is unsupported.",
+		"unsupported_to":   "The 'to' currency is unsupported.",
+		"invalid_date":     "The 'date' value is invalid.",
+		"oldest_date":      "Only last " + strconv.Itoa(redisdb.Days) + " days exchange rates are supported.",
+		"future_date":      "Future date exchange rates are unavailable.",
+		"api_limit":        "You have hit the maximum API limit.",
+		"empty_result":     "The current request did not return any results.",
 	}
 	currencies map[string]int
 )
@@ -35,28 +37,48 @@ type validationError struct {
 	message string
 }
 
-func getExchangeRate(w http.ResponseWriter, req *http.Request) {
-	log.Println(realip.FromRequest(req))
-	v := validateGetExchangeRate(currencies, req.URL.Query())
+// apiLimitExceeded rate limiting message
+func apiLimitExceeded(w http.ResponseWriter) {
+	apiError(w, http.StatusTooManyRequests, exchangeRateErr["api_limit"])
+}
 
-	if !v.err {
-		e := map[string][]map[string]interface{}{
-			"errors": {
-				{
-					"status":  http.StatusUnprocessableEntity,
-					"message": v.message,
-				},
+// apiError Raise API error
+func apiError(w http.ResponseWriter, http_code int, err_msg string) {
+	e := map[string][]map[string]interface{}{
+		"errors": {
+			{
+				"status":  http_code,
+				"message": err_msg,
 			},
-		}
+		},
+	}
 
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		json.NewEncoder(w).Encode(e)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http_code)
+	json.NewEncoder(w).Encode(e)
+}
+
+// getExchangeRate retrieves the exchange rate for the request
+func getExchangeRate(w http.ResponseWriter, req *http.Request) {
+	ip := realip.FromRequest(req)
+	if !redisdb.AllowAPIRequest(ip) {
+		apiLimitExceeded(w)
+		return
+	}
+
+	v := validateGetExchangeRate(currencies, req.URL.Query())
+	if !v.err {
+		apiError(w, http.StatusUnprocessableEntity, v.message)
 		return
 	}
 
 	date, from, to := extractGetExchangeRateQueryParams(req.URL.Query())
-	rate := redisdb.GetExchangeRate(date, from, to)
+	rate, err := redisdb.GetExchangeRate(date, from, to)
+	if err != nil {
+		apiError(w, http.StatusNotFound, exchangeRateErr["empty_result"])
+		return
+	}
+
 	json.NewEncoder(w).Encode(map[string]interface{}{"rate": rate, "status": 200})
 }
 

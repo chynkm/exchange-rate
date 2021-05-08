@@ -10,6 +10,8 @@ import (
 	"github.com/gomodule/redigo/redis"
 )
 
+const rate_prefix = "rate:"
+
 // SaveExchangeRates to Redis
 // Insert data of previous days exchange rate when a day is missing
 // Previous day is always present since we are fetching it from the DB
@@ -34,7 +36,7 @@ func SaveExchangeRates() {
 
 		for key, dailyExchangeRate := range dailyExchangeRates {
 			redisExchangeRates := []interface{}{}
-			redisExchangeRates = append(redisExchangeRates, key)
+			redisExchangeRates = append(redisExchangeRates, rate_prefix+key)
 			for code, rate := range dailyExchangeRate {
 				redisExchangeRates = append(redisExchangeRates, code, rate)
 			}
@@ -86,15 +88,15 @@ func calculateExchangeRate(
 }
 
 // GetExchangeRate retrieves the rate for the day from Redis
-func GetExchangeRate(date, from, to string) float64 {
+func GetExchangeRate(date, from, to string) (float64, error) {
 	rdb := Rdbpool.Get()
 	defer rdb.Close()
 
-	rate, err := redis.Float64(rdb.Do("HGET", date+":"+from, to))
+	rate, err := redis.Float64(rdb.Do("HGET", rate_prefix+date+":"+from, to))
 	if err != nil {
 		log.Println("redis: unable to retrieve exchange rate for: ", date, from, to)
-		return 0
+		return 0, err
 	}
 
-	return rate
+	return rate, nil
 }

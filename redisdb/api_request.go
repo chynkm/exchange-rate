@@ -15,8 +15,7 @@ const (
 )
 
 // incrementKey increases the count by 1 if key is present.
-// if missing, creates a key and sets the value to 1 and also
-// adds an expiry counter to the key
+// Creates a key, sets the value to 1 with an expiry if the key is missing.
 func incrementKey(rdb redis.Conn, key string, seconds int) {
 	_, err := rdb.Do("INCR", key)
 	if err != nil {

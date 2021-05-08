@@ -10,7 +10,13 @@ import (
 	"github.com/gomodule/redigo/redis"
 )
 
-const rate_prefix = "rate:"
+const (
+	euro        = "EUR"
+	rate_prefix = "rate:"
+	days        = 100 // maximum days exchange rate to load inside Redis
+)
+
+var LatestDate string
 
 // SaveExchangeRates to Redis
 // Insert data of previous days exchange rate when a day is missing
@@ -19,32 +25,43 @@ func SaveExchangeRates() {
 	rdb := Rdbpool.Get()
 	defer rdb.Close()
 
-	dbCurrencies := datastore.GetCurrencies()
+	// Flush the Redis data before fresh data is inserted
+	_, err := rdb.Do("FLUSHDB")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	for i := Days; i >= 0; i-- {
+	for i := days; i >= 0; i-- {
 		date := time.Now().AddDate(0, 0, -i).Format(currencystore.DateLayout)
 		if i == 0 {
 			LatestDate = date
 		}
-		exchangeRates := datastore.GetExchangeRates(date)
+		saveExchangeRateForDate(rdb, date)
+	}
+}
 
-		dailyExchangeRates := createExchangeRateHash(
-			date,
-			dbCurrencies,
-			exchangeRates,
-		)
+// saveExchangeRateForDate save exchange rate to Redis for a single date
+func saveExchangeRateForDate(rdb redis.Conn, date string) {
+	dbCurrencies := datastore.GetCurrencies()
 
-		for key, dailyExchangeRate := range dailyExchangeRates {
-			redisExchangeRates := []interface{}{}
-			redisExchangeRates = append(redisExchangeRates, rate_prefix+key)
-			for code, rate := range dailyExchangeRate {
-				redisExchangeRates = append(redisExchangeRates, code, rate)
-			}
+	exchangeRates := datastore.GetExchangeRates(date)
 
-			_, err := rdb.Do("HMSET", redisExchangeRates...)
-			if err != nil {
-				log.Fatal(err)
-			}
+	dailyExchangeRates := createExchangeRateHash(
+		date,
+		dbCurrencies,
+		exchangeRates,
+	)
+
+	for key, dailyExchangeRate := range dailyExchangeRates {
+		redisExchangeRates := []interface{}{}
+		redisExchangeRates = append(redisExchangeRates, rate_prefix+key)
+		for code, rate := range dailyExchangeRate {
+			redisExchangeRates = append(redisExchangeRates, code, rate)
+		}
+
+		_, err := rdb.Do("HMSET", redisExchangeRates...)
+		if err != nil {
+			log.Fatal(err)
 		}
 	}
 }
@@ -92,7 +109,19 @@ func GetExchangeRate(date, from, to string) (float64, error) {
 	rdb := Rdbpool.Get()
 	defer rdb.Close()
 
-	rate, err := redis.Float64(rdb.Do("HGET", rate_prefix+date+":"+from, to))
+	key := rate_prefix + date + ":" + from
+
+	exists, err := redis.Int(rdb.Do("EXISTS", key))
+	if err != nil {
+		log.Println("redis: check key exists failed in GetExchangeRate. key: ", key)
+		return 0, err
+	}
+
+	if exists == 0 {
+		saveExchangeRateForDate(rdb, date)
+	}
+
+	rate, err := redis.Float64(rdb.Do("HGET", key, to))
 	if err != nil {
 		log.Println("redis: unable to retrieve exchange rate for: ", date, from, to)
 		return 0, err

@@ -9,9 +9,9 @@ import (
 )
 
 const (
-	api_user_prefix      = "api_user:"
-	max_requests_per_min = 100
-	fixed_window         = 60 // start of minute to end of minute
+	apiUserPrefix     = "api_user:"
+	maxRequestsPerMin = 100
+	fixedWindow       = 60 // start of minute to end of minute
 )
 
 // incrementKey increases the count by 1 if key is present.
@@ -51,7 +51,7 @@ func getKeyCount(rdb redis.Conn, key string) int {
 
 // getKeyCount creates the key with prefix and suffix
 func createKey(ip string, t time.Time) string {
-	return api_user_prefix + ip + ":" + strconv.Itoa(t.Minute())
+	return apiUserPrefix + ip + ":" + strconv.Itoa(t.Minute())
 }
 
 // AllowAPIRequest determines whether an API request should be allowed or not
@@ -63,13 +63,13 @@ func AllowAPIRequest(ip string) bool {
 	key := createKey(ip, t)
 
 	n := getKeyCount(rdb, key)
-	if n >= max_requests_per_min {
+	if n >= maxRequestsPerMin {
 		return false
 	}
 
 	seconds := 0
 	if n == 0 {
-		seconds = fixed_window - t.Second()
+		seconds = fixedWindow - t.Second()
 	}
 	incrementKey(rdb, key, seconds)
 	return true

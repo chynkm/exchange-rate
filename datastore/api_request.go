@@ -17,6 +17,7 @@ VALUES(?, ?, ?, ?)`
 	_, err := Db.Exec(q, ip, currencies[from], currencies[to], date)
 
 	if err != nil {
-		log.Fatal(err)
+		// This isn't a critical feature. Hence, only logging
+		log.Println(err)
 	}
 }

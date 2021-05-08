@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/chynkm/ratesdb/currencystore"
@@ -24,13 +23,15 @@ var (
 		"unsupported_from": "The 'from' currency is unsupported.",
 		"unsupported_to":   "The 'to' currency is unsupported.",
 		"invalid_date":     "The 'date' value is invalid.",
-		"oldest_date":      "Only last " + strconv.Itoa(redisdb.Days) + " days exchange rates are supported.",
+		"oldest_date":      "The earliest supported exchange rate date is " + lastDate + ".",
 		"future_date":      "Future date exchange rates are unavailable.",
 		"api_limit":        "You have hit the maximum API limit.",
 		"empty_result":     "The current request did not return any results.",
 	}
 	currencies map[string]int
 )
+
+const lastDate = "1999-01-04"
 
 type validationError struct {
 	err     bool
@@ -131,10 +132,12 @@ func validateGetExchangeRate(
 			return &validationError{false, exchangeRateErr["invalid_date"]}
 		}
 
-		lastDate := time.Now().AddDate(0, 0, -redisdb.Days).Format(currencystore.DateLayout)
 		if d.Format(currencystore.DateLayout) < lastDate {
 			return &validationError{false, exchangeRateErr["oldest_date"]}
 		}
+
+		// Adding 1 day to support different TimeZones
+		// which will return the last days Exchange rates.
 		futureDate := time.Now().AddDate(0, 0, 1).Format(currencystore.DateLayout)
 		if d.Format(currencystore.DateLayout) >= futureDate {
 			return &validationError{false, exchangeRateErr["future_date"]}

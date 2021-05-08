@@ -17,10 +17,10 @@ func TestGetExchangeRateQueryValidation(t *testing.T) {
 	}
 
 	time := time.Now()
-	oldDate := time.AddDate(0, 0, -(redisdb.Days + 1)).Format(currencystore.DateLayout)
+	oldDate := "1999-01-03"
 	futureDate := time.AddDate(0, 0, 1).Format(currencystore.DateLayout)
 	validDate1 := time.Format(currencystore.DateLayout)
-	validDate2 := time.AddDate(0, 0, -redisdb.Days).Format(currencystore.DateLayout)
+	validDate2 := time.AddDate(0, 0, -10).Format(currencystore.DateLayout)
 
 	var exchangeRateTable = []struct {
 		in  map[string][]string

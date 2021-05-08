@@ -35,10 +35,6 @@ func TestGetExchangeRateQueryValidation(t *testing.T) {
 			&validationError{false, exchangeRateErr["from_missing"]},
 		},
 		{
-			map[string][]string{"from": {"EUR"}},
-			&validationError{false, exchangeRateErr["to_missing"]},
-		},
-		{
 			map[string][]string{"from": {"EUR", "INR"}, "to": {"USD"}},
 			&validationError{false, exchangeRateErr["only_one_from"]},
 		},
@@ -55,27 +51,27 @@ func TestGetExchangeRateQueryValidation(t *testing.T) {
 			&validationError{false, exchangeRateErr["unsupported_to"]},
 		},
 		{
-			map[string][]string{"from": {"EUR"}, "to": {"INR"}, "date": {}},
+			map[string][]string{"from": {"EUR"}, "to": {"USD"}, "date": {}},
 			&validationError{false, exchangeRateErr["date_missing"]},
 		},
 		{
-			map[string][]string{"from": {"EUR"}, "to": {"INR"}, "date": {"a", "b"}},
+			map[string][]string{"from": {"EUR"}, "to": {"USD"}, "date": {"a", "b"}},
 			&validationError{false, exchangeRateErr["only_one_date"]},
 		},
 		{
-			map[string][]string{"from": {"EUR"}, "to": {"INR"}, "date": {"a"}},
+			map[string][]string{"from": {"EUR"}, "to": {"USD"}, "date": {"a"}},
 			&validationError{false, exchangeRateErr["invalid_date"]},
 		},
 		{
-			map[string][]string{"from": {"EUR"}, "to": {"INR"}, "date": {"25-04-2021"}},
+			map[string][]string{"from": {"EUR"}, "to": {"USD"}, "date": {"25-04-2021"}},
 			&validationError{false, exchangeRateErr["invalid_date"]},
 		},
 		{
-			map[string][]string{"from": {"EUR"}, "to": {"INR"}, "date": {oldDate}},
+			map[string][]string{"from": {"EUR"}, "to": {"USD"}, "date": {oldDate}},
 			&validationError{false, exchangeRateErr["oldest_date"]},
 		},
 		{
-			map[string][]string{"from": {"EUR"}, "to": {"INR"}, "date": {futureDate}},
+			map[string][]string{"from": {"EUR"}, "to": {"USD"}, "date": {futureDate}},
 			&validationError{false, exchangeRateErr["future_date"]},
 		},
 		{
@@ -112,6 +108,10 @@ func TestExtractGetExchangeRateQueryParams(t *testing.T) {
 		{
 			map[string][]string{"from": {"EUR"}, "to": {"USD"}},
 			map[string]string{"from": "EUR", "to": "USD", "date": redisdb.LatestDate},
+		},
+		{
+			map[string][]string{"from": {"EUR"}},
+			map[string]string{"from": "EUR", "to": "", "date": redisdb.LatestDate},
 		},
 	}
 

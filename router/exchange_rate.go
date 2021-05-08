@@ -74,20 +74,13 @@ func getExchangeRate(w http.ResponseWriter, req *http.Request) {
 	date, from, to := extractGetExchangeRateQueryParams(req.URL.Query())
 	go datastore.LogAPIRequest(ip, from, to, date)
 
-	rate, err := redisdb.GetExchangeRate(date, from, to)
+	rates, err := redisdb.GetExchangeRate(date, from, to)
 	if err != nil {
 		apiError(w, http.StatusNotFound, exchangeRateErr["empty_result"])
 		return
 	}
 
-	var r map[string]map[string]interface{}
-	if rate == 0 {
-		r = map[string]map[string]interface{}{"data": {"rate": nil}}
-	} else {
-		r = map[string]map[string]interface{}{"data": {"rate": rate}}
-	}
-
-	json.NewEncoder(w).Encode(r)
+	json.NewEncoder(w).Encode(map[string]map[string]interface{}{"data": rates})
 }
 
 // extractGetExchangeRateQueryParams retrieves the query params.
@@ -96,12 +89,16 @@ func extractGetExchangeRateQueryParams(
 	q map[string][]string,
 ) (string, string, string) {
 	date := redisdb.LatestDate
-
 	if _, ok := q["date"]; ok {
 		date = q["date"][0]
 	}
 
-	return date, q["from"][0], q["to"][0]
+	var to string
+	if _, ok := q["to"]; ok {
+		to = q["to"][0]
+	}
+
+	return date, q["from"][0], to
 }
 
 // validateGetExchangeRate validate the API request
@@ -113,15 +110,19 @@ func validateGetExchangeRate(
 	if _, ok := q["from"]; !ok {
 		return &validationError{false, exchangeRateErr["from_missing"]}
 	}
-	if _, ok := q["to"]; !ok {
-		return &validationError{false, exchangeRateErr["to_missing"]}
-	}
 
 	if len(q["from"]) > 1 {
 		return &validationError{false, exchangeRateErr["only_one_from"]}
 	}
-	if len(q["to"]) > 1 {
-		return &validationError{false, exchangeRateErr["only_one_to"]}
+
+	if _, ok := q["to"]; ok {
+		if len(q["to"]) > 1 {
+			return &validationError{false, exchangeRateErr["only_one_to"]}
+		}
+
+		if _, ok := currencies[q["to"][0]]; !ok {
+			return &validationError{false, exchangeRateErr["unsupported_to"]}
+		}
 	}
 
 	if date, ok := q["date"]; ok {
@@ -151,10 +152,6 @@ func validateGetExchangeRate(
 
 	if _, ok := currencies[q["from"][0]]; !ok {
 		return &validationError{false, exchangeRateErr["unsupported_from"]}
-	}
-
-	if _, ok := currencies[q["to"][0]]; !ok {
-		return &validationError{false, exchangeRateErr["unsupported_to"]}
 	}
 
 	return &validationError{true, ""}

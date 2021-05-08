@@ -13,7 +13,7 @@ import (
 const (
 	euro        = "EUR"
 	rate_prefix = "rate:"
-	days        = 100 // maximum days exchange rate to load inside Redis
+	days        = 30 // maximum days exchange rate to load inside Redis at startup
 )
 
 var LatestDate string
@@ -105,7 +105,7 @@ func calculateExchangeRate(
 }
 
 // GetExchangeRate retrieves the rate for the day from Redis
-func GetExchangeRate(date, from, to string) (float64, error) {
+func GetExchangeRate(date, from, to string) (map[string]interface{}, error) {
 	rdb := Rdbpool.Get()
 	defer rdb.Close()
 
@@ -114,18 +114,40 @@ func GetExchangeRate(date, from, to string) (float64, error) {
 	exists, err := redis.Int(rdb.Do("EXISTS", key))
 	if err != nil {
 		log.Println("redis: check key exists failed in GetExchangeRate. key: ", key)
-		return 0, err
+		return map[string]interface{}{}, err
 	}
 
 	if exists == 0 {
 		saveExchangeRateForDate(rdb, date)
 	}
 
-	rate, err := redis.Float64(rdb.Do("HGET", key, to))
-	if err != nil {
-		log.Println("redis: unable to retrieve exchange rate for: ", date, from, to)
-		return 0, err
+	if to != "" {
+		rate, err := redis.Float64(rdb.Do("HGET", key, to))
+		if err != nil {
+			log.Println("redis: unable to retrieve HGET exchange rate for: ", date, from, to)
+			return map[string]interface{}{}, err
+		}
+
+		return map[string]interface{}{"rates": map[string]float64{to: rate}}, nil
 	}
 
-	return rate, nil
+	redisRates, err := redis.Values(rdb.Do("HGETALL", key))
+	if err != nil {
+		log.Println("redis: unable to retrieve HGETALL exchange rate for: ", date, from)
+		return map[string]interface{}{}, err
+	}
+
+	rates := map[string]interface{}{}
+	for i := 0; i < len(redisRates); i += 2 {
+		currencyCode, _ := redis.String(redisRates[i], nil)
+		exchangeRate, _ := redis.Float64(redisRates[i+1], nil)
+
+		if exchangeRate == 0 {
+			rates[currencyCode] = nil
+		} else {
+			rates[currencyCode] = exchangeRate
+		}
+	}
+
+	return map[string]interface{}{"rates": rates}, err
 }

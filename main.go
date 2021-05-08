@@ -66,7 +66,8 @@ func init() {
 }
 
 func main() {
-	go redisdb.SaveExchangeRates()
+	// not to be written as go routine to get latest date
+	redisdb.SaveExchangeRates()
 	router.Routes()
 }
 

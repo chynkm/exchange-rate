@@ -45,12 +45,10 @@ func apiLimitExceeded(w http.ResponseWriter) {
 
 // apiError Raise API error
 func apiError(w http.ResponseWriter, http_code int, err_msg string) {
-	e := map[string][]map[string]interface{}{
+	e := map[string]map[string]interface{}{
 		"errors": {
-			{
-				"status":  http_code,
-				"message": err_msg,
-			},
+			"status":  http_code,
+			"message": err_msg,
 		},
 	}
 
@@ -82,7 +80,14 @@ func getExchangeRate(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]interface{}{"rate": rate, "status": 200})
+	var r map[string]map[string]interface{}
+	if rate == 0 {
+		r = map[string]map[string]interface{}{"data": {"rate": nil}}
+	} else {
+		r = map[string]map[string]interface{}{"data": {"rate": rate}}
+	}
+
+	json.NewEncoder(w).Encode(r)
 }
 
 // extractGetExchangeRateQueryParams retrieves the query params.

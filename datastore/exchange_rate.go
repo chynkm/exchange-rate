@@ -6,6 +6,7 @@ import (
 
 // SaveCurrencyRates saves exchange rates to the DB
 func SaveExchangeRates(date string, exchangeRates map[string]float64) error {
+	deleteExchangeRateForDate(date)
 	currencies := GetCurrencies()
 
 	values := []interface{}{}
@@ -28,6 +29,17 @@ func SaveExchangeRates(date string, exchangeRates map[string]float64) error {
 	_, err := stmt.Exec(values...)
 
 	return err
+}
+
+// deleteExchangeRateForDate Delete the date's exchange rate information
+func deleteExchangeRateForDate(date string) {
+	q := `DELETE FROM exchange_rates WHERE date = ?`
+
+	_, err := Db.Exec(q, date)
+
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 // GetExchangeRates returns a hash of converted currency code and their rate

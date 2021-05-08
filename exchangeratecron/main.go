@@ -2,11 +2,12 @@ package main
 
 import (
 	"database/sql"
+	"log"
 	"os"
 
+	"github.com/chynkm/ratesdb/currencystore"
 	"github.com/chynkm/ratesdb/datastore"
 	"github.com/chynkm/ratesdb/redisdb"
-	"github.com/chynkm/ratesdb/router"
 	"github.com/gomodule/redigo/redis"
 	"gopkg.in/yaml.v2"
 )
@@ -66,8 +67,13 @@ func init() {
 }
 
 func main() {
-	go redisdb.SaveExchangeRates()
-	router.Routes()
+	date, exchangeRates := currencystore.FetchExchangeRates()
+	err := datastore.SaveExchangeRates(date, exchangeRates)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	redisdb.SaveExchangeRates()
 }
 
 func readConfigFile(cfg *Config) error {

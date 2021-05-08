@@ -73,6 +73,8 @@ func getExchangeRate(w http.ResponseWriter, req *http.Request) {
 	}
 
 	date, from, to := extractGetExchangeRateQueryParams(req.URL.Query())
+	go datastore.LogAPIRequest(ip, from, to, date)
+
 	rate, err := redisdb.GetExchangeRate(date, from, to)
 	if err != nil {
 		apiError(w, http.StatusNotFound, exchangeRateErr["empty_result"])

@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="RatesDB is free foreign exchange rates JSON API with currency conversion.">
+    <title>Free foreign exchange rate and currency conversion API</title>
+    <!-- Bootstrap core CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-wEmeIV1mKuiNpC+IOBjI7aAzPcEZeedi5yW5f2yOq55WWLwNGmvvx4Um1vskeMj0" crossorigin="anonymous">
+    <style>
+        .bd-placeholder-img {
+            font-size: 1.125rem;
+            text-anchor: middle;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            user-select: none;
+        }
+
+        @media (min-width: 768px) {
+            .bd-placeholder-img-lg {
+                font-size: 3.5rem;
+            }
+        }
+
+        pre {
+            margin-bottom: 0.1rem;
+        }
+
+        .custom_mt {
+            margin-top: 2rem;
+        }
+
+        .custom_text {
+            color: #0d6efd;
+        }
+
+        .st0 {
+            fill-rule: evenodd;
+            clip-rule: evenodd;
+            fill: #0d6efd;
+        }
+    </style>
+</head>
+
+<body onload="displayCurrentYear();">
+    <main>
+        <div class="container py-4">
+            <header class="d-flex flex-wrap justify-content-center pb-3 mb-4 border-bottom">
+                <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="32" class="me-2"
+                        viewBox="0 0 110.19 122.88">
+                        <path class="st0"
+                            d="M78.62,111.75l4.86-24.67l4.92,7.42c10.6-4.26,16.55-11.27,17.44-22.07c8.71,15.22,3.42,28.87-7.61,36.86 l5.02,7.56L78.62,111.75L78.62,111.75L78.62,111.75L78.62,111.75z M0,86.55l69.88-69.88L106.21,53l-69.88,69.88L0,86.55L0,86.55z M42.44,59.08c5.91-5.91,15.47-5.91,21.39,0c5.91,5.91,5.91,15.47,0,21.39c-5.91,5.91-15.47,5.91-21.39,0 C36.52,74.55,36.52,64.99,42.44,59.08L42.44,59.08z M17.21,80.4l46.46-46.46c2.96,2.96,7.78,2.96,10.73,0L88.77,48.3 c-2.96,2.96-2.96,7.78,0,10.73L42.31,105.5c-2.96-2.96-7.78-2.96-10.73,0L17.21,91.14C20.17,88.18,20.17,83.36,17.21,80.4 L17.21,80.4L17.21,80.4z M47.94,5.1l-4.86,24.67l-4.92-7.42c-10.6,4.26-16.55,11.27-17.44,22.07c-8.71-15.22-3.42-28.87,7.61-36.86 L23.32,0L47.94,5.1L47.94,5.1L47.94,5.1L47.94,5.1z" />
+                    </svg>
+                    <span class="fs-4 custom_text">RatesDB</span>
+                </a>
+                <ul class="nav nav-pills">
+                    <li class="nav-item"><a href="#api_definitions" class="nav-link">API</a></li>
+                    <li class="nav-item"><a href="#supported_currencies" class="nav-link">Currencies</a></li>
+                    <li class="nav-item"><a href="#faqs" class="nav-link">FAQs</a></li>
+                </ul>
+            </header>
+            <div class="px-4 py-5 my-5 text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="70" height="100" class="me-2"
+                    viewBox="0 0 110.19 122.88">
+                    <path class="st0"
+                        d="M78.62,111.75l4.86-24.67l4.92,7.42c10.6-4.26,16.55-11.27,17.44-22.07c8.71,15.22,3.42,28.87-7.61,36.86 l5.02,7.56L78.62,111.75L78.62,111.75L78.62,111.75L78.62,111.75z M0,86.55l69.88-69.88L106.21,53l-69.88,69.88L0,86.55L0,86.55z M42.44,59.08c5.91-5.91,15.47-5.91,21.39,0c5.91,5.91,5.91,15.47,0,21.39c-5.91,5.91-15.47,5.91-21.39,0 C36.52,74.55,36.52,64.99,42.44,59.08L42.44,59.08z M17.21,80.4l46.46-46.46c2.96,2.96,7.78,2.96,10.73,0L88.77,48.3 c-2.96,2.96-2.96,7.78,0,10.73L42.31,105.5c-2.96-2.96-7.78-2.96-10.73,0L17.21,91.14C20.17,88.18,20.17,83.36,17.21,80.4 L17.21,80.4L17.21,80.4z M47.94,5.1l-4.86,24.67l-4.92-7.42c-10.6,4.26-16.55,11.27-17.44,22.07c-8.71-15.22-3.42-28.87,7.61-36.86 L23.32,0L47.94,5.1L47.94,5.1L47.94,5.1L47.94,5.1z" />
+                </svg>
+                <h1 class="display-5 fw-bold custom_text">RatesDB</h1>
+                <div class="col-lg-8 mx-auto">
+                    <p class="fs-4">Free foreign exchange rates JSON API with currency conversion</p>
+                    <p>The API uses the exchange rates published by European Central Bank.</p>
+                </div>
+            </div>
+
+            <h2 id="api_definitions">API</h2>
+
+            <h3 id="latest-rate" class="custom_mt">Latest exchange rate - Single currency</h3>
+            <p>Retrieves the latest date exchange rate in JSON for a single currency.</p>
+            <div class="p-4 bg-light border rounded-3">
+                <code>GET https://free.ratesdb.com/v1/rates?from=EUR&to=GBP</code>
+            </div>
+            <div class="p-4 mt-4 bg-dark text-white rounded-3">
+                <pre><code>{
+    "data": {
+        "date": "2021-04-25",
+        "from": "EUR",
+        "rates": {
+            "GBP": 0.8681
+        }
+    }
+}</code></pre>
+            </div>
+
+            <h3 id="latest-rate-all" class="custom_mt">Latest exchange rates - All currencies</h3>
+            <p>Retrieves the latest date exchange rates in JSON for all currencies.</p>
+            <div class="p-4 bg-light border rounded-3">
+                <code>GET https://free.ratesdb.com/v1/rates?from=EUR</code>
+            </div>
+            <div class="p-4 mt-4 bg-dark text-white rounded-3">
+                <pre><code>{
+    "data": {
+        "date": "2021-04-25",
+        "from": "EUR",
+        "rates": {
+            "AUD": 1.5523,
+            "BGN": 1.9558,
+            "BRL": 6.3801,
+            "CAD": 1.4689,
+            ...
+        }
+    }
+}</code></pre>
+            </div>
+
+            <h3 id="latest-rate-date" class="custom_mt">Exchange rate - Date</h3>
+            <p>Retrieves the exchange rate in JSON for a single-currency/multiple-currencies on a given date. Oldest
+                available date is <code>1999-01-04</code>.</p>
+            <div class="p-4 bg-light border rounded-3">
+                <code>GET https://free.ratesdb.com/v1/rates?from=EUR&to=GBP&date=2021-01-01</code>
+            </div>
+            <div class="p-4 mt-4 bg-dark text-white rounded-3">
+                <pre><code>{
+    "data": {
+        "date": "2021-01-01",
+        "from": "EUR",
+        "rates": {
+            "GBP": 0.8681
+        }
+    }
+}</code></pre>
+            </div>
+
+            <h3 id="supported_parameters" class="custom_mt">Supported parameters</h3>
+            <div class="col-md-6">
+                <p>The following parameters are supported by the API.</p>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th scope="col">Parameter</th>
+                                <th scope="col">Mandatory</th>
+                                <th scope="col">Type</th>
+                                <th scope="col">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>from</strong></td>
+                                <td>Yes</td>
+                                <td>String</td>
+                                <td>The ISO currency code of the base currency</td>
+                            </tr>
+                            <tr>
+                                <td><strong>to</strong></td>
+                                <td>No</td>
+                                <td>String</td>
+                                <td>The ISO currency code of the converted currency</td>
+                            </tr>
+                            <tr>
+                                <td><strong>date</strong></td>
+                                <td>No</td>
+                                <td>String</td>
+                                <td>The ISO date format: YYYY-MM-DD</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <h3 id="error_codes" class="custom_mt">Error codes</h3>
+            <p>An example error response.</p>
+            <div class="p-4 mt-4 bg-dark text-white rounded-3">
+                <pre><code>{
+    "errors": {
+        "message": "The 'from' currency is unsupported.",
+        "status": 422
+    }
+}</code></pre>
+            </div>
+
+            <div class="col-md-6 mt-4">
+                <p>The following error responses are returned by the API.</p>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th scope="col">Code</th>
+                                <th scope="col">Error</th>
+                                <th scope="col">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>404</td>
+                                <td>Too many requests</td>
+                                <td>The maximum API limit has been reached</td>
+                            </tr>
+                            <tr>
+                                <td>422</td>
+                                <td>Unprocessable entity</td>
+                                <td>The request parameters are incorrect</td>
+                            </tr>
+                            <tr>
+                                <td>429</td>
+                                <td>Not found</td>
+                                <td>The current request did not return any results</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+
+            <h2 id="supported_currencies" class="mt-5">Currencies</h2>
+
+            <div class="custom_mt">
+                <p class="lead">The following currencies and their conversions are supported by the API.</p>
+                <div class="table-responsive col-md-6">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th scope="col">Currency</th>
+                                <th scope="col">Code</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Australian dollar</td>
+                                <td>AUD</td>
+                            </tr>
+                            <tr>
+                                <td>Brazilian real</td>
+                                <td>BRL</td>
+                            </tr>
+                            <tr>
+                                <td>Bulgarian lev</td>
+                                <td>BGN</td>
+                            </tr>
+                            <tr>
+                                <td>Canadian dollar</td>
+                                <td>CAD</td>
+                            </tr>
+                            <tr>
+                                <td>Chinese yuan renminbi</td>
+                                <td>CNY</td>
+                            </tr>
+                            <tr>
+                                <td>Croatian kun</td>
+                                <td>HRK</td>
+                            </tr>
+                            <tr>
+                                <td>Czech koruna</td>
+                                <td>CZK</td>
+                            </tr>
+                            <tr>
+                                <td>Danish krone</td>
+                                <td>DKK</td>
+                            </tr>
+                            <tr>
+                                <td>Euro</td>
+                                <td>EUR</td>
+                            </tr>
+                            <tr>
+                                <td>Hong Kong dollar</td>
+                                <td>HKD</td>
+                            </tr>
+                            <tr>
+                                <td>Hungarian forint</td>
+                                <td>HUF</td>
+                            </tr>
+                            <tr>
+                                <td>Icelandic krona</td>
+                                <td>ISK</td>
+                            </tr>
+                            <tr>
+                                <td>Indian rupee</td>
+                                <td>INR</td>
+                            </tr>
+                            <tr>
+                                <td>Indonesian rupiah</td>
+                                <td>IDR</td>
+                            </tr>
+                            <tr>
+                                <td>Israeli shekel</td>
+                                <td>ILS</td>
+                            </tr>
+                            <tr>
+                                <td>Japanese yen</td>
+                                <td>JPY</td>
+                            </tr>
+                            <tr>
+                                <td>Malaysian ringgit</td>
+                                <td>MYR</td>
+                            </tr>
+                            <tr>
+                                <td>Mexican peso</td>
+                                <td>MXN</td>
+                            </tr>
+                            <tr>
+                                <td>New Zealand dollar</td>
+                                <td>NZD</td>
+                            </tr>
+                            <tr>
+                                <td>Norwegian krone</td>
+                                <td>NOK</td>
+                            </tr>
+                            <tr>
+                                <td>Philippine peso</td>
+                                <td>PHP</td>
+                            </tr>
+                            <tr>
+                                <td>Polish zloty</td>
+                                <td>PLN</td>
+                            </tr>
+                            <tr>
+                                <td>Pound sterling</td>
+                                <td>GBP</td>
+                            </tr>
+                            <tr>
+                                <td>Romanian leu</td>
+                                <td>RON</td>
+                            </tr>
+                            <tr>
+                                <td>Russian rouble</td>
+                                <td>RUB</td>
+                            </tr>
+                            <tr>
+                                <td>Singapore dollar</td>
+                                <td>SGD</td>
+                            </tr>
+                            <tr>
+                                <td>South African rand</td>
+                                <td>ZAR</td>
+                            </tr>
+                            <tr>
+                                <td>South Korean won</td>
+                                <td>KRW</td>
+                            </tr>
+                            <tr>
+                                <td>Swedish krona</td>
+                                <td>SEK</td>
+                            </tr>
+                            <tr>
+                                <td>Swiss franc</td>
+                                <td>CHF</td>
+                            </tr>
+                            <tr>
+                                <td>Thai baht</td>
+                                <td>THB</td>
+                            </tr>
+                            <tr>
+                                <td>Turkish lira</td>
+                                <td>TRY</td>
+                            </tr>
+                            <tr>
+                                <td>US dollar</td>
+                                <td>USD</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+
+
+            <h2 id="faqs" class="mt-5">FAQs</h2>
+
+            <div class="custom_mt">
+                <p class="lead"><strong>Q</strong>: What is RatesDB?</p>
+                <p><strong>A</strong>: RatesDB is a lightweight, fast & easy to integrate API for calculating foreign
+                    exchange rates.</p>
+                <p class="lead"><strong>Q</strong>: When are the exchange rates updated?</p>
+                <p><strong>A</strong>: The updated exchange rates gets reflected in the API by 16:15 hours CET.</p>
+                <p class="lead"><strong>Q</strong>: What is the API rate limit?</p>
+                <p><strong>A</strong>: The API allows 100 requests per minute.</p>
+                <p class="lead"><strong>Q</strong>: The European Central Bank doesn't have historical rates for some
+                    currencies. What will be its response?</p>
+                <p><strong>A</strong>: Unavailable exchange rate currencies will have a <code>null</code> rate value.
+                </p>
+                <p class="lead"><strong>Q</strong>: What response formats are supported by the API?</p>
+                <p><strong>A</strong>: The API only supports JSON.</p>
+            </div>
+
+
+            <footer class="pt-3 mt-4 text-muted border-top">
+                &copy; <span id="footer_year"></span> RatesDB
+            </footer>
+        </div>
+    </main>
+</body>
+<script type="text/javascript">
+    function displayCurrentYear() {
+        var d = new Date();
+        document.getElementById("footer_year").innerHTML = d.getFullYear();;
+    }
+</script>
+
+</html>

@@ -80,7 +80,14 @@ func getExchangeRate(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]map[string]interface{}{"data": rates})
+	r := map[string]map[string]interface{}{
+		"data": {
+			"from":  from,
+			"date":  date,
+			"rates": rates,
+		},
+	}
+	json.NewEncoder(w).Encode(r)
 }
 
 // extractGetExchangeRateQueryParams retrieves the query params.

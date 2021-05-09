@@ -128,7 +128,7 @@ func GetExchangeRate(date, from, to string) (map[string]interface{}, error) {
 			return map[string]interface{}{}, err
 		}
 
-		return map[string]interface{}{"rates": map[string]float64{to: rate}}, nil
+		return map[string]interface{}{to: rate}, nil
 	}
 
 	redisRates, err := redis.Values(rdb.Do("HGETALL", key))
@@ -149,5 +149,5 @@ func GetExchangeRate(date, from, to string) (map[string]interface{}, error) {
 		}
 	}
 
-	return map[string]interface{}{"rates": rates}, err
+	return rates, err
 }

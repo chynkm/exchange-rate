@@ -391,11 +391,17 @@
         </div>
     </main>
 </body>
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-Q5J71NQ9GP"></script>
 <script type="text/javascript">
-    function displayCurrentYear() {
-        var d = new Date();
-        document.getElementById("footer_year").innerHTML = d.getFullYear();;
-    }
-</script>
+window.dataLayer = window.dataLayer || [];
+function gtag() { dataLayer.push(arguments); }
+gtag('js', new Date());
+gtag('config', 'G-Q5J71NQ9GP');
 
+function displayCurrentYear() {
+    var d = new Date();
+    document.getElementById("footer_year").innerHTML = d.getFullYear();;
+}
+</script>
 </html>

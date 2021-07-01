@@ -5,13 +5,15 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
+	"time"
 )
 
 // downloadCsv the CSV file and save it to /tmp
 func downloadCsv(url string) error {
 	deleteCurrencyFiles()
 
-	resp, err := http.Get(url)
+	resp, err := http.Get(url + "?" + strconv.FormatInt(time.Now().Unix(), 10))
 	if err != nil {
 		return err
 	}
@@ -34,12 +36,7 @@ func downloadCsv(url string) error {
 }
 
 // deleteCurrencyFiles: remove existing files before downloading
-func deleteCurrencyFiles() error {
-	err := os.Remove(csvZipFile)
-	if err != nil {
-		return err
-	}
-
-	err = os.Remove(csvFile)
-	return err
+func deleteCurrencyFiles() {
+	os.Remove(csvZipFile)
+	os.Remove(csvFile)
 }

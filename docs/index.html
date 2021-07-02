@@ -117,7 +117,7 @@
 
             <h3 id="latest-rate-date" class="custom_mt">Exchange rate - Date</h3>
             <p>Retrieves the exchange rate in JSON for a single-currency/multiple-currencies on a given date. Oldest
-                available date is <code>1999-01-04</code>.</p>
+                available date is <code>1999-01-04</code>. The previous day's exchange rates are returned if the exchange rates for the requested date aren't published by the bank.</p>
             <div class="p-4 bg-light border rounded-3">
                 <code>GET https://free.ratesdb.com/v1/rates?from=EUR&to=GBP&date=2021-01-01</code>
             </div>
